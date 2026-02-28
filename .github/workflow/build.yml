@@ -1,0 +1,45 @@
+name: Deploy Node.js App to EC2
+
+# Trigger workflow on pushes to master branch
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: SSH into EC2 and deploy
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_HOST }}          # EC2 Public IP
+          username: ${{ secrets.EC2_USERNAME }}  # EC2 username (ubuntu / ec2-user)
+          key: ${{ secrets.EC2_SSH_KEY }}        # Private SSH key
+          script: |
+            echo "Navigating to project directory..."
+            cd ${{ secrets.PROJECT_PATH }}
+
+            echo "Pulling latest changes..."
+            git pull origin master
+
+            echo "Installing dependencies..."
+            npm install
+
+            echo "Checking if PM2 is already running the app..."
+            if pm2 list | grep -q "index"; then
+              echo "App already exists, restarting..."
+              pm2 restart index
+            else
+              echo "App not found, starting..."
+              pm2 start index.js --name index
+            fi
+
+            echo "Saving PM2 process list..."
+            pm2 save
