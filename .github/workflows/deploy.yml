@@ -19,7 +19,7 @@ jobs:
           script: |
             set -e
 
-            cd /home/ubuntu/DemoApp
+            cd /home/ubuntu/DemoBackend
 
             echo "Fetching latest code..."
             git fetch origin
